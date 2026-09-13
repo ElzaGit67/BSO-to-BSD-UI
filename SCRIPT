@@ -1,0 +1,554 @@
+if game.PlaceId ~= 14458975921 then return end
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local ScreenGui = PlayerGui:WaitForChild("ScreenGui")
+local TopFrames = ScreenGui:WaitForChild("TopFrames")
+local MainFrames = ScreenGui:WaitForChild("MainFrames")
+local Buttons = ScreenGui:WaitForChild("Buttons")
+local Character = LocalPlayer.Character
+
+
+local UISchedule = {
+	["First"] = {0.333, 0.167, 0},
+	["Second"] = {0.333, 0.5, 0.333},
+	["Third"] = {0.333, 0.5, 0.667}
+}
+
+local OverheadGroups = {
+	["Rebirth"] = 1,
+	["Super Rebirth"] = 1,
+	["Mega Rebirth"] = 1,
+
+	["Prestige"] = 2,
+	["Super Prestige"] = 2,
+	["Divine"] = 2,
+
+	["Reality"] = 3,
+	["Enchanted"] = 3,
+	["Stellar"] = 3,
+
+	["Power"] = 4,
+	["Eternity"] = 4,
+	["X-Rebirth"] = 4,
+
+	["X-Prestige"] = 5,
+	["Shaded"] = 5,
+	["Extreme"] = 5,
+
+	["Zenith"] = 6,
+	["Astral"] = 6,
+	["Null"] = 6,
+
+	["Ancient"] = 7,
+	["Ascension"] = 7,
+	["Oblivion"] = 7,
+
+	["Radiant"] = 8,
+}
+
+local OverheadUIPos = {
+	["Cash"] = "First",
+	["Multi"] = "Second",
+
+	["Rebirth"] = "First",
+	["Super Rebirth"] = "Second",
+	["Mega Rebirth"] = "Third",
+
+	["Prestige"] = "First",
+	["Super Prestige"] = "Second",
+	["Divine"] = "Third",
+
+	["Reality"] = "First",
+	["Enchanted"] = "Second",
+	["Stellar"] = "Third",
+
+	["Power"] = "First",
+	["Eternity"] = "Second",
+	["X-Rebirth"] = "Third",
+
+	["X-Prestige"] = "First",
+	["Shaded"] = "Second",
+	["Extreme"] = "Third",
+
+	["Zenith"] = "First",
+	["Astral"] = "Second",
+	["Null"] = "Third",
+
+	["Ancient"] = "First",
+	["Ascension"] = "Second",
+	["Oblivion"] = "Third",
+
+	["Radiant"] = "First",
+}
+
+local PositionOrder = {
+	["First"] = 1,
+	["Second"] = 2,
+	["Third"] = 3
+}
+
+local Module = {}
+
+function Module.InsertLighting()
+	Lighting.Ambient = Color3.fromRGB(138, 138, 138)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
+	Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+	Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+	Lighting.GlobalShadows = true
+	Lighting.Brightness = 2
+	Lighting.EnvironmentDiffuseScale = 0
+	Lighting.EnvironmentSpecularScale = 0
+	Lighting.GeographicLatitude = 41.733
+	Lighting.TimeOfDay = 14
+
+	local Sky = Lighting:FindFirstChild("BSDSky")
+
+	if not Sky then
+        Sky = Instance.new("Sky", Lighting)
+		Sky.Name = "BSDSky"
+	end
+
+	Sky.CelestialBodiesShown = true
+	Sky.MoonAngularSize = 11
+	Sky.MoonTextureId = "rbxasset://sky/moon.jpg"
+	Sky.SkyboxBk = "rbxassetid://591058823"
+	Sky.SkyboxDn = "rbxassetid://591059876"
+	Sky.SkyboxFt = "rbxassetid://591058104"
+	Sky.SkyboxLf = "rbxassetid://591057861"
+	Sky.SkyboxRt = "rbxassetid://591057625"
+	Sky.SkyboxUp = "rbxassetid://591059642"
+	Sky.StarCount = 3000
+	Sky.SunAngularSize = 21
+	Sky.SunTextureId = "rbxasset://sky/sun.jpg"
+end
+
+function Module.ChangeOverhead(Overhead)
+	if not Overhead then
+		return
+	end
+
+	Overhead.Size = UDim2.fromScale(15, 12)
+	Overhead.AlwaysOnTop = true
+	Overhead.Brightness = 1
+	Overhead.MaxDistance = 1000
+	Overhead.StudsOffsetWorldSpace = Vector3.new(0, 0, 0)
+	Overhead.StudsOffset = Vector3.new(0, 8, 0)
+
+	for _, UI in ipairs(Overhead:GetDescendants()) do
+		if UI:IsA("TextLabel") then
+			UI.Size = UDim2.new(0.333, 0, 0.05, 0)
+		end
+	end
+
+	local User = Overhead:FindFirstChild("User")
+	local ETrans = Overhead:FindFirstChild("ETrans")
+
+	if User and User:IsA("TextLabel") then
+		User.FontFace = Font.new(
+			"rbxasset://fonts/families/Ubuntu.json",
+			Enum.FontWeight.Regular,
+			Enum.FontStyle.Normal
+		)
+
+		User.Size = UDim2.fromScale(1, 0.05)
+		User.Position = UDim2.new(0, 0, 0.95, 0)
+		User.Text = Overhead.Parent.Parent.Name
+	end
+	if ETrans and ETrans:IsA("TextLabel") then
+		ETrans.Position = UDim2.new(0.05, 0, 0.95, 0)
+	end
+end
+
+function Module.UpdatePositions(Overhead)
+	if not Overhead then
+		return
+	end
+
+	local VisibleStats = {}
+
+	for StatName, Group in pairs(OverheadGroups) do
+		local UI = Overhead:FindFirstChild(StatName)
+
+		if UI and UI:IsA("TextLabel") and UI.Visible then
+			table.insert(VisibleStats, {
+				UI = UI,
+				Group = Group,
+				OriginalPosition = OverheadUIPos[StatName]
+			})
+		end
+	end
+
+	table.sort(VisibleStats, function(A, B)
+		return PositionOrder[A.OriginalPosition] < PositionOrder[B.OriginalPosition]
+	end)
+
+	local VisibleCount = math.clamp(#VisibleStats, 1, 3)
+
+	for Index, Data in ipairs(VisibleStats) do
+		local UI = Data.UI
+		local PositionName
+
+		if Index == 1 then
+			PositionName = "First"
+		elseif Index == 2 then
+			PositionName = "Second"
+		else
+			PositionName = "Third"
+		end
+
+		local X = UISchedule[PositionName][VisibleCount]
+		local Y = 0.9 - (Data.Group * 0.05)
+
+		UI.Position = UDim2.new(
+			X,
+			0,
+			Y,
+			0
+		)
+	end
+end
+
+function Module.SetupOverhead(Overhead)
+	if not Overhead or not Overhead.Parent then
+		return
+	end
+
+	if Overhead:GetAttribute("OverheadSetup") then
+		Module.UpdatePositions(Overhead)
+		return
+	end
+
+	Overhead:SetAttribute("OverheadSetup", true)
+
+	Module.ChangeOverhead(Overhead)
+
+	local Cash = Overhead:FindFirstChild("Cash")
+	local Multi = Overhead:FindFirstChild("Multi")
+
+	if Cash and Cash:IsA("TextLabel") then
+		Cash.Visible = true
+		Cash.Size = UDim2.new(0.333, 0, 0.05, 0)
+		Cash.Position = UDim2.new(
+			UISchedule["First"][2],
+			0,
+			0.9,
+			0
+		)
+	end
+
+	if Multi and Multi:IsA("TextLabel") then
+		Multi.Visible = true
+		Multi.Size = UDim2.new(0.333, 0, 0.05, 0)
+		Multi.Position = UDim2.new(
+			UISchedule["Second"][2],
+			0,
+			0.9,
+			0
+		)
+	end
+
+	Module.UpdatePositions(Overhead)
+
+	for StatName in pairs(OverheadGroups) do
+		local UI = Overhead:FindFirstChild(StatName)
+
+		if UI and UI:IsA("TextLabel") then
+			UI:GetPropertyChangedSignal("Visible"):Connect(function()
+				Module.UpdatePositions(Overhead)
+			end)
+		end
+	end
+
+	Overhead.ChildAdded:Connect(function(UI)
+		if not UI:IsA("TextLabel") then
+			return
+		end
+
+		UI.Size = UDim2.new(0.333, 0, 0.05, 0)
+
+		if OverheadGroups[UI.Name] then
+			UI:GetPropertyChangedSignal("Visible"):Connect(function()
+				Module.UpdatePositions(Overhead)
+			end)
+		end
+
+		Module.UpdatePositions(Overhead)
+	end)
+end
+
+function Module.GetOverhead()
+
+	if not Character then
+		return nil
+	end
+
+	local Head = Character:FindFirstChild("Head")
+
+	if not Head then
+		return nil
+	end
+
+	return Head:FindFirstChild("Overhead")
+end
+
+function Module.SetupCharacter(Character)
+	local Head = Character:WaitForChild("Head", 10)
+
+	if not Head then
+		return
+	end
+
+	local Overhead = Head:WaitForChild("Overhead", 10)
+
+	if Overhead then
+		Module.SetupOverhead(Overhead)
+	end
+end
+
+local ButtonOrders = {
+	ShopB = 1,
+	StatsB = 2,
+	TransB = 3,
+	UpgB = 4,
+	SettingsB = 5,
+	SpectateB = 6
+}
+
+local ButtonFrameColors = {
+	["ShopB"] = Color3.fromRGB(0, 100, 0),
+	["StatsB"] = Color3.fromRGB(100, 0, 150),
+	["TransB"] = Color3.fromRGB(50, 50, 150),
+	["UpgB"] = Color3.fromRGB(150, 0, 75),
+	["SettingsB"] = Color3.fromRGB(125, 125, 0),
+	["SpectateB"] = Color3.fromRGB(162, 106, 27)
+}
+
+local ButtonTextColors = {
+	["ShopB"] = Color3.fromRGB(0, 170, 0),
+	["StatsB"] = Color3.fromRGB(170, 0, 255),
+	["TransB"] = Color3.fromRGB(85, 85, 255),
+	["UpgB"] = Color3.fromRGB(255, 0, 127),
+	["SettingsB"] = Color3.fromRGB(200, 200, 0),
+	["SpectateB"] = Color3.fromRGB(255, 167, 43)
+}
+
+local MainFramesName = {
+	ShopB = "Shop",
+	StatsB = "StatIndex",
+	TransB = "Trans",
+	UpgB = "Upgrades",
+	SettingsB = "Settings"
+}
+
+local function TweenPosition(Frame, Pos)
+    TweenService:Create(Frame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = Pos}):Play()
+end
+
+local function GetFramePosition()
+    local Positions = {
+		Invisible = UDim2.new(1.5, 0, 0.5, 0),
+		Visible = UDim2.new(0.5, 0, 0.5, 0)
+	}
+	for _, frame in pairs(MainFrames:GetChildren()) do
+        if frame.Name ~= "Spectate" then
+		    local Status = frame:GetAttribute("Status")
+		    TweenPosition(frame, Positions[Status])
+
+			frame:GetAttributeChangedSignal("Status"):Connect(function()
+                Status = frame:GetAttribute("Status")
+		        TweenPosition(frame, Positions[Status])
+			end)
+		end
+	end
+end
+
+function Module.SetMainFrame(button, Frame_Name)
+    local FrameName = MainFramesName[Frame_Name]
+    local LocalFrame = MainFrames:WaitForChild(FrameName)
+	LocalFrame:SetAttribute("Status", "Invisible")
+	LocalFrame.Position = UDim2.new(1.5,0,0.5,0)
+	LocalFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	LocalFrame.Visible = true
+	LocalFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+        LocalFrame.Visible = true
+	end)
+	button.MouseButton1Click:Connect(function()
+        local Status = LocalFrame:GetAttribute("Status")
+
+		if Status == "Invisible" then
+            LocalFrame:SetAttribute("Status", "Visible")
+		elseif Status == "Visible" then
+		    LocalFrame:SetAttribute("Status", "Invisible")
+		end
+
+		for _, otherFrames in pairs(MainFrames:GetChildren()) do
+            if otherFrames ~= LocalFrame and otherFrames.Name ~= "Spectate" then
+			    otherFrames:SetAttribute("Status", "Invisible")
+			end
+		end
+	end)
+end
+
+function Module.Buttons()
+    local Frame = Buttons:FindFirstChild("Frame")
+	if not Frame then
+        Frame = Instance.new("Frame", Buttons)
+	end
+	Frame.BackgroundTransparency = 1
+	Frame.Position = UDim2.new(0, 20, 0.375, 0)
+	Frame.Size = UDim2.fromScale(0.1, 0.2)
+	Frame.Visible = true
+
+	GetFramePosition()
+	for _, button in pairs(Buttons:GetChildren()) do
+		if button ~= Frame then
+            button.Parent = Frame
+			local TextButton = button:WaitForChild("TextButton")
+			local UICornerFrame = Instance.new("UICorner", button)
+			local UICornerButton = Instance.new("UICorner", TextButton)
+			button.Size = UDim2.new(1, 0, 0.2, 0)
+		    if button.Name == "SpectateB" then
+                button.Size = UDim2.new(0.75, 0, 0.15, 0)
+		    end
+			button.BackgroundColor3 = ButtonFrameColors[button.Name]
+			button.Position = UDim2.new(0, 0, (ButtonOrders[button.Name] * 0.25) - 0.25, 0)
+			local ButtonFrame = Instance.new("Frame", button)
+			local UICornerButtonFrame = Instance.new("UICorner", ButtonFrame)
+			ButtonFrame.Visible = true
+			ButtonFrame.BackgroundColor3 = ButtonTextColors[button.Name]
+			ButtonFrame.Position = UDim2.new(0, -3, 0, -3)
+			ButtonFrame.Size = UDim2.new(1, 0, 1, 0)
+
+			TextButton.Visible = true
+			TextButton.BackgroundColor3 = ButtonTextColors[button.Name]
+			TextButton.BackgroundTransparency = 1
+			TextButton.ZIndex = 2
+			TextButton.TextColor3 = Color3.fromRGB(255,255,255)
+			TextButton.Position = UDim2.new(0, -3, 0, -3)
+			TextButton.Size = UDim2.new(1, 0, 1, 0)
+			if button.Name ~= "SpectateB" then
+                Module.SetMainFrame(TextButton, button.Name)
+			end
+		end
+	end
+end
+
+function Module.TopFrames()
+    local Cash = TopFrames:WaitForChild("Cash")
+	local Level = TopFrames:WaitForChild("Level")
+	local Time = TopFrames:WaitForChild("Time")
+	local Timer = TopFrames:WaitForChild("Timer")
+
+	-- Cash
+	Cash.BackgroundColor3 = Color3.fromRGB(75,0,150)
+	Cash.BackgroundTransparency = 0.5
+	Cash.Position = UDim2.new(0.5,0,0.05,-35)
+	Cash.Size = UDim2.new(0.33, 0, 0.075, 0)
+	Cash.AnchorPoint = Vector2.new(0.5, 0.5)
+	Cash.UICorner.CornerRadius = UDim.new(0, 5)
+	Cash.Display.TextColor3 = Color3.new(0, 1, 0)
+	local UIStrokeDisplay = Instance.new("UIStroke", Cash.Display)
+	UIStrokeDisplay.Color = Color3.new(0, 1, 0)
+	UIStrokeDisplay.Thickness = 1
+
+	local Display = Cash:WaitForChild("Display")
+	Display.BackgroundColor3 = Color3.fromRGB(128,0,255)
+	Display.BackgroundTransparency = 0
+	Display.Position = UDim2.new(0,-3,0,-3)
+	Display.Size = UDim2.new(1,0,1,0)
+	Display.UICorner.CornerRadius = UDim.new(0, 5)
+	Display.FontFace = Font.new(
+			"rbxasset://fonts/families/TitilliumWeb.json",
+			Enum.FontWeight.Regular,
+			Enum.FontStyle.Normal
+		)
+
+	-- Level
+	Level.BackgroundColor3 = Color3.fromRGB(150,50,0)
+	Level.BackgroundTransparency = 0.5
+	Level.Position = UDim2.new(0.26,0,0.05,-35)
+	Level.Size = UDim2.new(0.125, 0, 0.05, 0)
+	Level.AnchorPoint = Vector2.new(0.5, 0.5)
+	Level.UICorner.CornerRadius = UDim.new(0, 5)
+
+	local Display2 = Level:WaitForChild("Display")
+	Display2.BackgroundColor3 = Color3.fromRGB(255,85,0)
+	Display2.BackgroundTransparency = 0
+	Display2.Position = UDim2.new(0,-3,0,-3)
+	Display2.Size = UDim2.new(1,0,1,0)
+	Display2.UICorner.CornerRadius = UDim.new(0, 5)
+	Display2.TextColor3 = Color3.fromRGB(255,255,255)
+	Display2.FontFace = Font.new(
+			"rbxasset://fonts/families/PatrickHand.json",
+			Enum.FontWeight.Regular,
+			Enum.FontStyle.Normal
+		)
+
+	-- Time
+	Time.BackgroundColor3 = Color3.fromRGB(0,125,92)
+	Time.BackgroundTransparency = 0.5
+	Time.Position = UDim2.new(0.74,0,0.05,-35)
+	Time.Size = UDim2.new(0.125, 0, 0.05, 0)
+	Time.AnchorPoint = Vector2.new(0.5, 0.5)
+	Time.UICorner.CornerRadius = UDim.new(0, 5)
+
+	local Display3 = Time:WaitForChild("Display")
+	Display3.BackgroundColor3 = Color3.fromRGB(0,200,147)
+	Display3.BackgroundTransparency = 0
+	Display3.Position = UDim2.new(0,-3,0,-3)
+	Display3.Size = UDim2.new(1,0,1,0)
+	Display3.UICorner.CornerRadius = UDim.new(0, 5)
+	Display3.TextColor3 = Color3.fromRGB(255,255,255)
+	Display3.FontFace = Font.new(
+			"rbxasset://fonts/families/PatrickHand.json",
+			Enum.FontWeight.Regular,
+			Enum.FontStyle.Normal
+		)
+	
+	-- Timer
+	Timer.BackgroundColor3 = Color3.fromRGB(163,50,50)
+	Timer.BackgroundTransparency = 0.5
+	Timer.Position = UDim2.new(0.74,0,0.105,-35)
+	Timer.Size = UDim2.new(0.1, 0, 0.04, 0)
+	Timer.AnchorPoint = Vector2.new(0.5, 0.5)
+	Timer.UICorner.CornerRadius = UDim.new(0, 5)
+
+	local Display4 = Timer:WaitForChild("Display")
+	Display4.BackgroundColor3 = Color3.fromRGB(200,60,60)
+	Display4.BackgroundTransparency = 0
+	Display4.Position = UDim2.new(0,-3,0,-3)
+	Display4.Size = UDim2.new(1,0,1,0)
+	Display4.UICorner.CornerRadius = UDim.new(0, 5)
+	Display4.TextColor3 = Color3.fromRGB(255,255,255)
+	Display4.FontFace = Font.new(
+			"rbxasset://fonts/families/Ubuntu.json",
+			Enum.FontWeight.Regular,
+			Enum.FontStyle.Normal
+		)
+end
+
+function Module:Run()
+	Module.InsertLighting()
+	Module.TopFrames()
+	Module.Buttons()
+
+	if Character then
+        task.spawn(function()
+			Module.SetupCharacter(Character)
+		end)
+	end
+
+	LocalPlayer.CharacterAdded:Connect(function(Char)
+		task.spawn(function()
+			Module.SetupCharacter(Char)
+		end)
+	end)
+end
+
+Module:Run()
