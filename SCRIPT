@@ -170,47 +170,46 @@ function Module.UpdatePositions(Overhead)
 		return
 	end
 
-	local VisibleStats = {}
+	local GroupStats = {}
 
+	-- Collect visible stats by group
 	for StatName, Group in pairs(OverheadGroups) do
 		local UI = Overhead:FindFirstChild(StatName)
 
 		if UI and UI:IsA("TextLabel") and UI.Visible then
-			table.insert(VisibleStats, {
+			GroupStats[Group] = GroupStats[Group] or {}
+
+			table.insert(GroupStats[Group], {
 				UI = UI,
-				Group = Group,
-				OriginalPosition = OverheadUIPos[StatName]
+				Order = PositionOrder[OverheadUIPos[StatName]]
 			})
 		end
 	end
 
-	table.sort(VisibleStats, function(A, B)
-		return PositionOrder[A.OriginalPosition] < PositionOrder[B.OriginalPosition]
-	end)
+	-- Position each group separately
+	for Group, Stats in pairs(GroupStats) do
+		table.sort(Stats, function(A, B)
+			return A.Order < B.Order
+		end)
 
-	local VisibleCount = math.clamp(#VisibleStats, 1, 3)
+		local Count = math.clamp(#Stats, 1, 3)
 
-	for Index, Data in ipairs(VisibleStats) do
-		local UI = Data.UI
-		local PositionName
+		for Index, Data in ipairs(Stats) do
+			local PositionName
 
-		if Index == 1 then
-			PositionName = "First"
-		elseif Index == 2 then
-			PositionName = "Second"
-		else
-			PositionName = "Third"
+			if Index == 1 then
+				PositionName = "First"
+			elseif Index == 2 then
+				PositionName = "Second"
+			else
+				PositionName = "Third"
+			end
+
+			local X = UISchedule[PositionName][Count]
+			local Y = 0.9 - (Group * 0.05)
+
+			Data.UI.Position = UDim2.new(X, 0, Y, 0)
 		end
-
-		local X = UISchedule[PositionName][VisibleCount]
-		local Y = 0.9 - (Data.Group * 0.05)
-
-		UI.Position = UDim2.new(
-			X,
-			0,
-			Y,
-			0
-		)
 	end
 end
 
