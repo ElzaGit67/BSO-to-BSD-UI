@@ -349,6 +349,20 @@ local function TweenPosition(Frame, Pos)
     TweenService:Create(Frame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = Pos}):Play()
 end
 
+local function UpdateFrameiguess(frame, trigger)
+    frame.Visible = trigger
+end
+
+function GetFrameInvisibility(frame)
+    local pos = frame.Position
+	UpdateFrameiguess(frame, pos == UDim2.new(1.5, 0, 0.5, 0) and false or true)
+
+	frame:GetPropertyChangedSignal("Position"):Connect(function()
+        pos = frame.Position
+	    UpdateFrameiguess(frame, pos == UDim2.new(1.5, 0, 0.5, 0) and false or true)
+	end)
+end
+
 local function GetFramePosition()
     local Positions = {
 		Invisible = UDim2.new(1.5, 0, 0.5, 0),
@@ -358,10 +372,12 @@ local function GetFramePosition()
         if frame.Name ~= "Spectate" then
 		    local Status = frame:GetAttribute("Status")
 		    TweenPosition(frame, Positions[Status])
+			GetFrameInvisibility(frame)
 
 			frame:GetAttributeChangedSignal("Status"):Connect(function()
                 Status = frame:GetAttribute("Status")
 		        TweenPosition(frame, Positions[Status])
+				UpdateFrameiguess(frame)
 			end)
 		end
 	end
@@ -373,10 +389,6 @@ function Module.SetMainFrame(button, Frame_Name)
 	LocalFrame:SetAttribute("Status", "Invisible")
 	LocalFrame.Position = UDim2.new(1.5,0,0.5,0)
 	LocalFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	LocalFrame.Visible = true
-	LocalFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-        LocalFrame.Visible = true
-	end)
 	button.MouseButton1Click:Connect(function()
         local Status = LocalFrame:GetAttribute("Status")
 
