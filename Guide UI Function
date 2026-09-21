@@ -28,7 +28,7 @@ for _, btnFrame in pairs(ScrollingPage:GetChildren()) do
 	if btnFrame:IsA("Frame") then
 		local btn = btnFrame.Button
 		btn.MouseButton1Click:Connect(function()
-			if not Menu:FindFirstChild(btn.Name) then return end
+			if not Menu:FindFirstChild(btnFrame.Name) then return end
 			
 			updateOnButton(btn)
 		end)
