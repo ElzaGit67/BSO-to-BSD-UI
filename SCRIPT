@@ -1,5 +1,7 @@
 if game.PlaceId ~= 14458975921 then return end
 
+wait(1)
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
@@ -165,6 +167,32 @@ function Module.ChangeOverhead(Overhead)
 	end
 end
 
+function Module.LoadCustomInstance(assetId, parent)
+
+	local model
+
+	while task.wait() and not model do
+
+		local success, result = pcall(function()
+
+			return game:GetObjects(
+				"rbxassetid://" .. tostring(assetId)
+			)[1]
+
+		end)
+
+		if success and result then
+
+			model = result
+
+			model.Parent = parent or workspace
+
+		end
+	end
+
+	return model
+end
+
 function Module.UpdatePositions(Overhead)
 	if not Overhead then
 		return
@@ -316,7 +344,8 @@ local ButtonOrders = {
 	TransB = 3,
 	UpgB = 4,
 	SettingsB = 5,
-	SpectateB = 6
+	GuideB = 6,
+	SpectateB = 7
 }
 
 local ButtonFrameColors = {
@@ -325,7 +354,8 @@ local ButtonFrameColors = {
 	["TransB"] = Color3.fromRGB(50, 50, 150),
 	["UpgB"] = Color3.fromRGB(150, 0, 75),
 	["SettingsB"] = Color3.fromRGB(125, 125, 0),
-	["SpectateB"] = Color3.fromRGB(162, 106, 27)
+	["GuideB"] = Color3.fromRGB(0, 180, 94),
+	["SpectateB"] = Color3.fromRGB(162, 106, 27),
 }
 
 local ButtonTextColors = {
@@ -334,6 +364,7 @@ local ButtonTextColors = {
 	["TransB"] = Color3.fromRGB(85, 85, 255),
 	["UpgB"] = Color3.fromRGB(255, 0, 127),
 	["SettingsB"] = Color3.fromRGB(200, 200, 0),
+	["GuideB"] = Color3.fromRGB(0, 239, 124),
 	["SpectateB"] = Color3.fromRGB(255, 167, 43)
 }
 
@@ -342,11 +373,18 @@ local MainFramesName = {
 	StatsB = "StatIndex",
 	TransB = "Trans",
 	UpgB = "Upgrades",
-	SettingsB = "Settings"
+	SettingsB = "Settings",
+	GuideB = "Guide"
 }
 
 local function TweenPosition(Frame, Pos)
-    TweenService:Create(Frame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = Pos}):Play()
+    local tweeninfo = TweenInfo.new(0.9, Enum.EasingStyle.Quart)
+    local tweeninfo2 = TweenInfo.new(0.9)
+
+    local tweeninfoResult = (Pos == UDim2.new(1.5, 0, 0.5, 0) and tweeninfo2 or tweeninfo)
+    local target = {Position = Pos}
+
+    TweenService:Create(Frame, tweeninfoResult, target):Play()
 end
 
 local function UpdateFrameiguess(frame, trigger)
@@ -423,6 +461,8 @@ function Module.Buttons()
 			local TextButton = button:WaitForChild("TextButton")
 			local UICornerFrame = Instance.new("UICorner", button)
 			local UICornerButton = Instance.new("UICorner", TextButton)
+			UICornerFrame.CornerRadius = UDim.new(0, 5)
+			UICornerButton.CornerRadius = UDim.new(0, 5)
 			button.Size = UDim2.new(1, 0, 0.2, 0)
 		    if button.Name == "SpectateB" then
                 button.Size = UDim2.new(0.75, 0, 0.15, 0)
@@ -431,6 +471,8 @@ function Module.Buttons()
 			button.Position = UDim2.new(0, 0, (ButtonOrders[button.Name] * 0.25) - 0.25, 0)
 			local ButtonFrame = Instance.new("Frame", button)
 			local UICornerButtonFrame = Instance.new("UICorner", ButtonFrame)
+
+			UICornerButtonFrame.CornerRadius = UDim.new(0, 5)
 			ButtonFrame.Visible = true
 			ButtonFrame.BackgroundColor3 = ButtonTextColors[button.Name]
 			ButtonFrame.Position = UDim2.new(0, -3, 0, -3)
@@ -463,10 +505,6 @@ function Module.TopFrames()
 	Cash.Size = UDim2.new(0.33, 0, 0.075, 0)
 	Cash.AnchorPoint = Vector2.new(0.5, 0.5)
 	Cash.UICorner.CornerRadius = UDim.new(0, 5)
-	Cash.Display.TextColor3 = Color3.new(0, 1, 0)
-	local UIStrokeDisplay = Instance.new("UIStroke", Cash.Display)
-	UIStrokeDisplay.Color = Color3.new(0, 1, 0)
-	UIStrokeDisplay.Thickness = 1
 
 	local Display = Cash:WaitForChild("Display")
 	Display.BackgroundColor3 = Color3.fromRGB(128,0,255)
@@ -474,11 +512,13 @@ function Module.TopFrames()
 	Display.Position = UDim2.new(0,-3,0,-3)
 	Display.Size = UDim2.new(1,0,1,0)
 	Display.UICorner.CornerRadius = UDim.new(0, 5)
+    Display.RichText = true
 	Display.FontFace = Font.new(
 			"rbxasset://fonts/families/TitilliumWeb.json",
-			Enum.FontWeight.Regular,
+			Enum.FontWeight.Bold,
 			Enum.FontStyle.Normal
 		)
+    Display.TextColor3 = Color3.new(0, 1, 0)
 
 	-- Level
 	Level.BackgroundColor3 = Color3.fromRGB(150,50,0)
@@ -495,6 +535,7 @@ function Module.TopFrames()
 	Display2.Size = UDim2.new(1,0,1,0)
 	Display2.UICorner.CornerRadius = UDim.new(0, 5)
 	Display2.TextColor3 = Color3.fromRGB(255,255,255)
+    Display2.RichText = true
 	Display2.FontFace = Font.new(
 			"rbxasset://fonts/families/PatrickHand.json",
 			Enum.FontWeight.Regular,
@@ -516,6 +557,7 @@ function Module.TopFrames()
 	Display3.Size = UDim2.new(1,0,1,0)
 	Display3.UICorner.CornerRadius = UDim.new(0, 5)
 	Display3.TextColor3 = Color3.fromRGB(255,255,255)
+    Display3.RichText = true
 	Display3.FontFace = Font.new(
 			"rbxasset://fonts/families/PatrickHand.json",
 			Enum.FontWeight.Regular,
@@ -537,6 +579,7 @@ function Module.TopFrames()
 	Display4.Size = UDim2.new(1,0,1,0)
 	Display4.UICorner.CornerRadius = UDim.new(0, 5)
 	Display4.TextColor3 = Color3.fromRGB(255,255,255)
+    Display4.RichText = true
 	Display4.FontFace = Font.new(
 			"rbxasset://fonts/families/Ubuntu.json",
 			Enum.FontWeight.Regular,
@@ -547,6 +590,20 @@ end
 function Module:Run()
 	Module.InsertLighting()
 	Module.TopFrames()
+    --/ Custom Frames
+	local CustomUI = Module.LoadCustomInstance(132912388954405)
+	
+	local Guide = CustomUI:WaitForChild("Guide")
+    Guide.Parent = MainFrames
+
+
+	local GuideB = CustomUI:WaitForChild("GuideB")
+	GuideB.Parent = Buttons
+
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/ElzaGit67/BSO-to-BSD-UI/refs/heads/main/Guide%20UI%20Function"))()
+	
+	CustomUI:Destroy()
+
 	Module.Buttons()
 
 	if Character then
@@ -561,5 +618,4 @@ function Module:Run()
 		end)
 	end)
 end
-
 Module:Run()
