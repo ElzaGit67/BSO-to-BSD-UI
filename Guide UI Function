@@ -1,0 +1,36 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer.PlayerGui
+
+local ScreenGui = PlayerGui.ScreenGui
+local MainFrames = ScreenGui:WaitForChild("MainFrames")
+
+local Guide = MainFrames:WaitForChild("Guide")
+
+local Main = Guide:WaitForChild("Main")
+local Menu = Main:WaitForChild("Menu")
+local Pages = Main:WaitForChild("Pages")
+
+local ScrollingPage = Pages:WaitForChild("ScrollingPage")
+
+local function updateOnButton(btn)
+	for _, Page in pairs(Menu:GetChildren()) do
+		if Page:IsA("ScrollingFrame") then
+			Page.Visible = false
+		end
+		if Page.Name == btn.Name then
+			Page.Visible = true
+		end
+	end
+end
+
+for _, btnFrame in pairs(ScrollingPage:GetChildren()) do
+	if btnFrame:IsA("Frame") then
+		local btn = btnFrame.Button
+		btnFrame.MouseButton1Click:Connect(function()
+			if not Menu:FindFirstChild(btn.Name) then return end
+			
+			updateOnButton(btn)
+		end)
+	end
+end
